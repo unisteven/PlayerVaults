@@ -1,0 +1,19 @@
+##########################################################
+#                    PlayerVaults Config                   #
+##########################################################
+
+#Database info
+host: "host"
+port: 3306
+database: "playervaults"
+user: "user"
+pass: "pass"
+minimumIdle: 1
+maximumPoolSize: 50
+idleTimeOut: 60000
+connectionTimeout: 60000
+connectionTestQuery: SELECT 1
+
+# text
+prefix: "&4[&aPlayerVaults&4]"
+

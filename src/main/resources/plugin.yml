@@ -1,0 +1,11 @@
+name: "PlayerVaults"
+author: UniSteven
+version: "4.0"
+api-version: 1.16
+description: "Playervaults"
+main: me.unisteven.Main
+softdepend: [PlaceholderAPI]
+commands:
+  playervault:
+    description: "Playervaults command"
+    aliases: [pv]
