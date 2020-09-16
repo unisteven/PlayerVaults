@@ -1,5 +1,6 @@
 package me.unisteven.playervaults;
 
+import me.unisteven.Main;
 import me.unisteven.database.Vault;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,12 +24,17 @@ public class VaultMenu implements Listener {
     private int page = 1;
     private int nextPage = 1;
     private Player p;
-    private Vault vault;
-    private int maxVaults = 0;
+    private Player requester = null;
+    private final Vault vault;
+    private final int rowSize = 5;
+    private final int invSize = ((rowSize + 1) * 9);
+    private final int maxVaults;
+    private final Main plugin;
 
-    public VaultMenu(int max) {
+    public VaultMenu(int max, Main plugin) {
+        this.plugin = plugin;
         this.maxVaults = max;
-        this.vault = new Vault();
+        this.vault = new Vault(plugin);
     }
 
     public void createInv() {
@@ -36,7 +42,7 @@ public class VaultMenu implements Listener {
             page = nextPage;
         }
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
-        inv = Bukkit.createInventory(null, 54, ChatColor.translateAlternateColorCodes('&', "&f&lPlayer vault &c&l(&f&l" + this.page + "&c&l)"));
+        inv = Bukkit.createInventory(null, invSize, Main.translatePlaceholders(this.plugin.getConfig().getString("menuName"), this.maxVaults, this.page));
         ItemStack[] inventory = this.vault.loadInventory(this.page, this.p);
         inv.clear();
         if (inventory != null) {
@@ -48,11 +54,13 @@ public class VaultMenu implements Listener {
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        inv.setItem(45, createGuiItem(Material.PAPER, "Back to previous page", "Click me to get back", "to the previous page"));
-        for (int i = 46; i < 53; i++) {
+        String[] backLores = this.plugin.getConfig().getStringList("backButtonDescription").stream().map(s -> Main.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        inv.setItem(invSize - 9, createGuiItem(Material.PAPER, Main.translatePlaceholders(this.plugin.getConfig().getString("backButtonName"), this.maxVaults, this.page), backLores));
+        for (int i = (invSize - 8); i < (invSize - 1); i++) {
             inv.setItem(i, createGuiItem(Material.GRAY_STAINED_GLASS_PANE, ChatColor.translateAlternateColorCodes('&', "&c-=-=-=-")));
         }
-        inv.setItem(53, createGuiItem(Material.PAPER, "Next page", "Click me to get", "to the next page"));
+        String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> Main.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        inv.setItem((invSize - 1), createGuiItem(Material.PAPER, Main.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores));
     }
 
     // Nice little method to create a gui item with a custom name, and description
@@ -72,10 +80,18 @@ public class VaultMenu implements Listener {
     }
 
     // You can open the inventory with this
-    public void openInventory(final HumanEntity ent) {
-        this.p = (Player) ent;
-        createInv();
-        ent.openInventory(inv);
+    public void openInventory(final HumanEntity ent, final HumanEntity requester) {
+        if(requester != ent && requester != null){
+            this.requester = (Player) requester;
+            this.p = (Player) ent;
+            ent.closeInventory(); // close inventory in case they still got one open
+            createInv();
+            requester.openInventory(inv);
+        }else {
+            this.p = (Player) ent;
+            createInv();
+            ent.openInventory(inv);
+        }
     }
 
     // Check for clicks on items
@@ -84,8 +100,16 @@ public class VaultMenu implements Listener {
         if(e.getInventory() != inv){
             return;
         }
-        if (e.getRawSlot() >= 45 && e.getRawSlot() <= 53) {
+        if (e.getRawSlot() >= (invSize - 9) && e.getRawSlot() <= (invSize - 1)) {
             e.setCancelled(true); // players can only take items at the top.
+        }
+        String prefix = Main.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
+        // if it is an admin check if he has perm to alter the inv
+        if(this.requester != null){
+            if(!(this.requester.hasPermission("playervaults.admin.*") || this.requester.hasPermission("playervaults.admin.alter"))){
+                e.setCancelled(true);
+                this.requester.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to alter this inventory &f(&b&lplayervaults.admin.alter&f)"));
+            }
         }
         final ItemStack clickedItem = e.getCurrentItem();
 
@@ -94,17 +118,17 @@ public class VaultMenu implements Listener {
 
         final Player p = (Player) e.getWhoClicked();
 
-        if (e.getRawSlot() == 45) {
+        if (e.getRawSlot() == (invSize - 9)) {
             if (!(page <= 1)) {
                 nextPage--;
-//                page--;
             }
             this.recreateInventory(p);
             return;
         }
-        if (e.getRawSlot() == 53) {
+        if (e.getRawSlot() == (invSize - 1)) {
             if((this.page + 1) > maxVaults){
-                p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cYou are limited to &f" + this.maxVaults + " vaults!"));
+                String message = Main.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), this.maxVaults, this.page);
+                p.sendMessage(prefix + message);
                 return;
             }else {
                 nextPage++;
@@ -128,10 +152,17 @@ public class VaultMenu implements Listener {
             return;
         }
         this.vault.saveInventory(this.inv, this.p, this.page);
+        this.requester = null;
     }
 
     private void recreateInventory(Player p) {
+        Player requester = this.requester;
         p.closeInventory();
-        this.openInventory(p);
+        this.requester = requester;
+        this.openInventory(this.p, this.requester);
+    }
+
+    public Player getRequester() {
+        return this.requester;
     }
 }

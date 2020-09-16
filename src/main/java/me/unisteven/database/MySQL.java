@@ -2,16 +2,17 @@ package me.unisteven.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import me.unisteven.Main;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.sql.Connection;
 
-public class DataBase {
+public class MySQL implements IDataBase {
     private HikariDataSource dataSource;
     private Plugin plugin;
 
-    public void init(Plugin plugin) {
+    public void init(Main plugin) {
         this.plugin = plugin;
         try {
             openConnection();
@@ -28,11 +29,11 @@ public class DataBase {
         config.setDriverClassName("com.mysql.jdbc.Driver");
         config.setUsername(configuration.getString("user"));
         config.setPassword(configuration.getString("pass"));
-        config.setMinimumIdle(configuration.getInt("minimumIdle"));
-        config.setMaximumPoolSize(configuration.getInt("maximumPoolSize"));
-        config.setIdleTimeout(configuration.getInt("idleTimeOut"));
-        config.setConnectionTimeout(configuration.getInt("connectionTimeout"));
-        config.setConnectionTestQuery(configuration.getString("connectionTestQuery"));
+        config.setMinimumIdle(1);
+        config.setMaximumPoolSize(50);
+        config.setIdleTimeout(60000);
+        config.setConnectionTimeout(60000);
+        config.setConnectionTestQuery("SELECT 1");
         this.dataSource = new HikariDataSource(config);
         System.out.println("Connection established with database!");
     }
@@ -58,10 +59,4 @@ public class DataBase {
         }
     }
 
-    /**
-     * Get the {@link HikariDataSource}.
-     */
-    public HikariDataSource getDataSource() {
-        return this.dataSource;
-    }
 }

@@ -20,13 +20,13 @@ public class MigrateData {
 
     public void checkForUpdates() {
         try (Connection connection = Main.database.getConnection()) {
-            try (PreparedStatement ps = connection.prepareStatement("SHOW TABLES LIKE 'Version'")) {
+            try (PreparedStatement ps = connection.prepareStatement("SHOW TABLES LIKE 'pv_Version'")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         // Default tables do not yet exist so version 1.
                         this.updateToVersion(1);
                     } else {
-                        try(PreparedStatement ps2 = connection.prepareStatement("SELECT MAX(version) AS version FROM Version")){
+                        try(PreparedStatement ps2 = connection.prepareStatement("SELECT MAX(version) AS version FROM pv_Version")){
                             try(ResultSet rs2 = ps2.executeQuery()){
                                 if(rs2.next()){
                                     int version = rs2.getInt("version");
@@ -69,7 +69,7 @@ public class MigrateData {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            try(PreparedStatement ps = connection.prepareStatement("INSERT INTO Version VALUES (?)")){
+            try(PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Version VALUES (?)")){
                 ps.setInt(1, version);
                 ps.executeUpdate();
             }catch (Exception e){
