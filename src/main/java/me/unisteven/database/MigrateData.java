@@ -1,6 +1,6 @@
 package me.unisteven.database;
 
-import me.unisteven.Main;
+import me.unisteven.PlayerVault;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -12,14 +12,14 @@ import java.sql.Statement;
 import java.util.logging.Level;
 
 public class MigrateData {
-    private Main plugin;
+    private PlayerVault plugin;
 
-    public MigrateData(Main plugin) {
+    public MigrateData(PlayerVault plugin) {
         this.plugin = plugin;
     }
 
     public void checkForUpdates() {
-        try (Connection connection = Main.database.getConnection()) {
+        try (Connection connection = this.plugin.getDatabase().getConnection()) {
             try (PreparedStatement ps = connection.prepareStatement("SHOW TABLES LIKE 'pv_Version'")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
@@ -30,7 +30,7 @@ public class MigrateData {
                             try(ResultSet rs2 = ps2.executeQuery()){
                                 if(rs2.next()){
                                     int version = rs2.getInt("version");
-                                    Main.logger.log(Level.INFO, "Rebelwar is on version: " + version + " trying to update to version: " + (version + 1));
+                                    this.plugin.getLogger().log(Level.INFO, "Rebelwar is on version: " + version + " trying to update to version: " + (version + 1));
                                     if (this.loadVersion(version + 1) != null) {
                                         this.updateToVersion(version + 1);
                                         this.checkForUpdates();
@@ -57,12 +57,12 @@ public class MigrateData {
     }
 
     public void updateToVersion(int version) {
-        Main.logger.log(Level.CONFIG, "Loading version " + version + " into the database");
+        this.plugin.getLogger().log(Level.CONFIG, "Loading version " + version + " into the database");
         String sql = this.loadVersion(version);
         if(sql == null){
             return;
         }
-        try (Connection connection = Main.database.getConnection()) {
+        try (Connection connection = this.plugin.getDatabase().getConnection()) {
             connection.setAutoCommit(false);
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);

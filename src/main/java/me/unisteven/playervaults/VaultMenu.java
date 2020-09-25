@@ -1,6 +1,6 @@
 package me.unisteven.playervaults;
 
-import me.unisteven.Main;
+import me.unisteven.PlayerVault;
 import me.unisteven.database.Vault;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,9 +29,9 @@ public class VaultMenu implements Listener {
     private final int rowSize = 5;
     private final int invSize = ((rowSize + 1) * 9);
     private final int maxVaults;
-    private final Main plugin;
+    private final PlayerVault plugin;
 
-    public VaultMenu(int max, Main plugin) {
+    public VaultMenu(int max, PlayerVault plugin) {
         this.plugin = plugin;
         this.maxVaults = max;
         this.vault = new Vault(plugin);
@@ -42,7 +42,7 @@ public class VaultMenu implements Listener {
             page = nextPage;
         }
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
-        inv = Bukkit.createInventory(null, invSize, Main.translatePlaceholders(this.plugin.getConfig().getString("menuName"), this.maxVaults, this.page));
+        inv = Bukkit.createInventory(null, invSize, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("menuName"), this.maxVaults, this.page));
         ItemStack[] inventory = this.vault.loadInventory(this.page, this.p);
         inv.clear();
         if (inventory != null) {
@@ -54,13 +54,13 @@ public class VaultMenu implements Listener {
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        String[] backLores = this.plugin.getConfig().getStringList("backButtonDescription").stream().map(s -> Main.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
-        inv.setItem(invSize - 9, createGuiItem(Material.PAPER, Main.translatePlaceholders(this.plugin.getConfig().getString("backButtonName"), this.maxVaults, this.page), backLores));
+        String[] backLores = this.plugin.getConfig().getStringList("backButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        inv.setItem(invSize - 9, createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("backButtonName"), this.maxVaults, this.page), backLores));
         for (int i = (invSize - 8); i < (invSize - 1); i++) {
             inv.setItem(i, createGuiItem(Material.GRAY_STAINED_GLASS_PANE, ChatColor.translateAlternateColorCodes('&', "&c-=-=-=-")));
         }
-        String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> Main.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
-        inv.setItem((invSize - 1), createGuiItem(Material.PAPER, Main.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores));
+        String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        inv.setItem((invSize - 1), createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores));
     }
 
     // Nice little method to create a gui item with a custom name, and description
@@ -103,7 +103,7 @@ public class VaultMenu implements Listener {
         if (e.getRawSlot() >= (invSize - 9) && e.getRawSlot() <= (invSize - 1)) {
             e.setCancelled(true); // players can only take items at the top.
         }
-        String prefix = Main.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
+        String prefix = PlayerVault.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
         // if it is an admin check if he has perm to alter the inv
         if(this.requester != null){
             if(!(this.requester.hasPermission("playervaults.admin.*") || this.requester.hasPermission("playervaults.admin.alter"))){
@@ -127,7 +127,7 @@ public class VaultMenu implements Listener {
         }
         if (e.getRawSlot() == (invSize - 1)) {
             if((this.page + 1) > maxVaults){
-                String message = Main.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), this.maxVaults, this.page);
+                String message = PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), this.maxVaults, this.page);
                 p.sendMessage(prefix + message);
                 return;
             }else {
@@ -156,13 +156,18 @@ public class VaultMenu implements Listener {
     }
 
     private void recreateInventory(Player p) {
-        Player requester = this.requester;
-        p.closeInventory();
-        this.requester = requester;
+        this.vault.saveInventory(this.inv, this.p, this.page);
         this.openInventory(this.p, this.requester);
     }
 
     public Player getRequester() {
         return this.requester;
+    }
+
+    public void setPage(int page) {
+        if(page != -1){
+            this.page = page;
+            this.nextPage = page;
+        }
     }
 }

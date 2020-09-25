@@ -1,6 +1,6 @@
 package me.unisteven.database;
 
-import me.unisteven.Main;
+import me.unisteven.PlayerVault;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -15,14 +15,14 @@ import java.sql.ResultSet;
 
 public class Vault {
 
-    private Main plugin;
+    private PlayerVault plugin;
 
-    public Vault(Main plugin) {
+    public Vault(PlayerVault plugin) {
         this.plugin = plugin;
     }
 
     public void saveInventory(Inventory inventory, Player p, int page) {
-        if (Main.storageType.equalsIgnoreCase("flat")) {
+        if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
             try {
                 File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page);
                 FileWriter fw = new FileWriter(vault.getAbsoluteFile());
@@ -34,7 +34,7 @@ public class Vault {
             }
             return;
         }
-        try (Connection connection = Main.database.getConnection()) {
+        try (Connection connection = this.plugin.getDatabase().getConnection()) {
             try (PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Vault(uuid, page, items) VALUES (?,?,?) ON DUPLICATE KEY UPDATE items = ?")) {
                 ps.setString(1, p.getUniqueId().toString());
                 ps.setInt(2, page);
@@ -51,7 +51,7 @@ public class Vault {
     }
 
     public ItemStack[] loadInventory(int page, Player p) {
-        if (Main.storageType.equalsIgnoreCase("flat")) {
+        if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
             try {
                 File dir = new File(plugin.getDataFolder() + "/vaults/");
                 if (!dir.exists()) {
@@ -83,7 +83,7 @@ public class Vault {
             return null;
         }
         ItemStack[] inventory = null;
-        try (Connection connection = Main.database.getConnection()) {
+        try (Connection connection = this.plugin.getDatabase().getConnection()) {
             try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM pv_Vault WHERE uuid = ? AND page = ?")) {
                 ps.setString(1, p.getUniqueId().toString());
                 ps.setInt(2, page);

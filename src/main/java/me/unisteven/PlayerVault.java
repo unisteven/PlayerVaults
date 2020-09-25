@@ -1,6 +1,6 @@
 package me.unisteven;
 
-import me.unisteven.command.PlayerVault;
+import me.unisteven.command.PlayerVaultCommand;
 import me.unisteven.database.MySQL;
 import me.unisteven.database.IDataBase;
 import me.unisteven.database.MigrateData;
@@ -12,29 +12,29 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Main extends JavaPlugin {
-    public static Logger logger;
-    public static IDataBase database;
-    public static String storageType;
+public class PlayerVault extends JavaPlugin {
+    private Logger logger;
+    private IDataBase database;
+    private String storageType;
 
     @Override
     public void onEnable(){
-        Main.logger = Bukkit.getLogger();
+        this.logger = Bukkit.getLogger();
         logger.log(Level.FINE, "PlayerVaults is enabling");
         // configs
         this.getConfig().options().copyDefaults(true);
         saveConfig();
         // commands
-        Objects.requireNonNull(getCommand("playervault")).setExecutor(new PlayerVault(this));
+        Objects.requireNonNull(getCommand("playervault")).setExecutor(new PlayerVaultCommand(this));
 
         // database
         try {
             String storageType = getConfig().getString("storageType");
-            Main.storageType = storageType;
+            this.storageType = storageType;
             if(storageType.equalsIgnoreCase("mysql")){
-                Main.database = new MySQL();
+                this.database = new MySQL();
                 logger.log(Level.INFO, "Loading database type:" + storageType);
-                Main.database.init(this);
+                this.database.init(this);
                 logger.log(Level.FINE, "Database loaded succesfully");
                 MigrateData dataMigration = new MigrateData(this);
                 dataMigration.checkForUpdates();
@@ -52,6 +52,19 @@ public class Main extends JavaPlugin {
     @Override
     public void onDisable(){
 
+    }
+
+    @Override
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public IDataBase getDatabase() {
+        return database;
+    }
+
+    public String getStorageType() {
+        return storageType;
     }
 
     public static String translatePlaceholders(String input, int vaultLimit, int vaultPage){

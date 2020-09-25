@@ -2,7 +2,7 @@ package me.unisteven.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import me.unisteven.Main;
+import me.unisteven.PlayerVault;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
@@ -12,7 +12,7 @@ public class MySQL implements IDataBase {
     private HikariDataSource dataSource;
     private Plugin plugin;
 
-    public void init(Main plugin) {
+    public void init(PlayerVault plugin) {
         this.plugin = plugin;
         try {
             openConnection();

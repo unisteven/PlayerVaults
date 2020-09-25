@@ -1,6 +1,6 @@
 package me.unisteven.command;
 
-import me.unisteven.Main;
+import me.unisteven.PlayerVault;
 import me.unisteven.database.Vault;
 import me.unisteven.playervaults.VaultMenu;
 import org.bukkit.Bukkit;
@@ -14,24 +14,32 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlayerVault implements CommandExecutor {
+public class PlayerVaultCommand implements CommandExecutor {
     private Map<Player, VaultMenu> vaults = new HashMap<>();
 
-    private Main plugin;
+    private PlayerVault plugin;
 
-    public PlayerVault(Main plugin) {
+    public PlayerVaultCommand(PlayerVault plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        String prefix = Main.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
+        String prefix = PlayerVault.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
         if(!(sender instanceof Player)){
             sender.sendMessage(prefix + " Only players can execute this command.");
             return false;
         }
         Player p = (Player) sender;
         if(args.length > 0){
+            try{
+                int page = Integer.parseInt(args[0]);
+                openPlayerVault(p, p, page);
+                System.out.println("yes:" + page);
+                return true;
+            }catch (NumberFormatException ignored){
+
+            }
             if(args[0].equalsIgnoreCase("admin")){
                 if(args.length > 1){
                     if(args[1].equalsIgnoreCase("open")){
@@ -40,7 +48,7 @@ public class PlayerVault implements CommandExecutor {
                                 sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cTo few arguments! &f/pv admin open {playername}"));
                                 return false;
                             }
-                            openPlayerVault(p, Bukkit.getPlayer(args[2]));
+                            openPlayerVault(p, Bukkit.getPlayer(args[2]), -1);
                         }else{
                             sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to execute this command &f(&b&lplayervaults.admin.open&f)"));
                         }
@@ -78,12 +86,12 @@ public class PlayerVault implements CommandExecutor {
             }
             return true;
         }
-        openPlayerVault(p, p);
+        openPlayerVault(p, p, -1);
         return false;
     }
 
-    private void openPlayerVault(Player requester, Player target){
-        String prefix = Main.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
+    private void openPlayerVault(Player requester, Player target, int page){
+        String prefix = PlayerVault.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
         int maxVaults = 0;
         for(PermissionAttachmentInfo permis : target.getEffectivePermissions()){
             if(permis.getPermission().startsWith("playervaults.limit.")){
@@ -102,6 +110,10 @@ public class PlayerVault implements CommandExecutor {
             target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + this.plugin.getConfig().getString("noVaults")));
             return;
         }
+        if(page > maxVaults){
+            target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), maxVaults, page)));
+            return;
+        }
         VaultMenu vaultMenu = this.vaults.get(target);
         if(vaultMenu == null){
             vaultMenu = new VaultMenu(maxVaults, this.plugin);
@@ -112,16 +124,7 @@ public class PlayerVault implements CommandExecutor {
             target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + this.plugin.getConfig().getString("inUse")));
             return;
         }
-//        System.out.println("already target:" + vaultMenu.getRequester());
-//        if(vaultMenu.getRequester() != null){
-//            vaultMenu.getRequester().closeInventory();
-//        }
-//        if(vaultMenu.getRequester() != target && vaultMenu.getRequester() != null){
-//            this.vaults.remove(target);
-//            vaultMenu = new VaultMenu(maxVaults, this.plugin);
-//            Bukkit.getPluginManager().registerEvents(vaultMenu, this.plugin);
-//            this.vaults.put(target, vaultMenu);
-//        }
+        vaultMenu.setPage(page);
         vaultMenu.openInventory(target,requester);
     }
 }

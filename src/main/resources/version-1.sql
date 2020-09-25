@@ -1,7 +1,7 @@
 CREATE TABLE pv_Vault(
 uuid VARCHAR(255) NOT NULL,
 page INTEGER NOT NULL,
-items TEXT,
+items LONGTEXT,
 PRIMARY KEY (uuid, page)
 );
 
