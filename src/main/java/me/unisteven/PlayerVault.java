@@ -1,47 +1,41 @@
 package me.unisteven;
 
 import me.unisteven.command.PlayerVaultCommand;
-import me.unisteven.database.MySQL;
 import me.unisteven.database.IDataBase;
 import me.unisteven.database.MigrateData;
+import me.unisteven.database.MySQL;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Objects;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class PlayerVault extends JavaPlugin {
-    private Logger logger;
     private IDataBase database;
     private String storageType;
 
     @Override
     public void onEnable(){
-        this.logger = Bukkit.getLogger();
-        logger.log(Level.FINE, "PlayerVaults is enabling");
-        // configs
+        Bukkit.getLogger().log(Level.FINE, "PlayerVaults is enabling");
+//        // configs
         this.getConfig().options().copyDefaults(true);
         saveConfig();
-        // commands
-        Objects.requireNonNull(getCommand("playervault")).setExecutor(new PlayerVaultCommand(this));
-
-        // database
+//        // commands
+        getCommand("playervault").setExecutor(new PlayerVaultCommand(this));
+//        // database
         try {
             String storageType = getConfig().getString("storageType");
             this.storageType = storageType;
             if(storageType.equalsIgnoreCase("mysql")){
                 this.database = new MySQL();
-                logger.log(Level.INFO, "Loading database type:" + storageType);
+                Bukkit.getLogger().log(Level.INFO, "Loading database type:" + storageType);
                 this.database.init(this);
-                logger.log(Level.FINE, "Database loaded succesfully");
+                Bukkit.getLogger().log(Level.FINE, "Database loaded succesfully");
                 MigrateData dataMigration = new MigrateData(this);
                 dataMigration.checkForUpdates();
             }
 
         }catch (Exception e){
-            logger.log(Level.SEVERE, "Database connection failed! with the following error:");
+            Bukkit.getLogger().log(Level.SEVERE, "Database connection failed! with the following error:");
             e.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
             return;
@@ -52,11 +46,6 @@ public class PlayerVault extends JavaPlugin {
     @Override
     public void onDisable(){
 
-    }
-
-    @Override
-    public Logger getLogger() {
-        return logger;
     }
 
     public IDataBase getDatabase() {

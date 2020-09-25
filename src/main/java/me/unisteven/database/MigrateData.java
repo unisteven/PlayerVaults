@@ -1,6 +1,7 @@
 package me.unisteven.database;
 
 import me.unisteven.PlayerVault;
+import org.bukkit.Bukkit;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ public class MigrateData {
                             try(ResultSet rs2 = ps2.executeQuery()){
                                 if(rs2.next()){
                                     int version = rs2.getInt("version");
-                                    this.plugin.getLogger().log(Level.INFO, "Rebelwar is on version: " + version + " trying to update to version: " + (version + 1));
+                                    Bukkit.getLogger().log(Level.INFO, "Rebelwar is on version: " + version + " trying to update to version: " + (version + 1));
                                     if (this.loadVersion(version + 1) != null) {
                                         this.updateToVersion(version + 1);
                                         this.checkForUpdates();
@@ -57,7 +58,7 @@ public class MigrateData {
     }
 
     public void updateToVersion(int version) {
-        this.plugin.getLogger().log(Level.CONFIG, "Loading version " + version + " into the database");
+        Bukkit.getLogger().log(Level.CONFIG, "Loading version " + version + " into the database");
         String sql = this.loadVersion(version);
         if(sql == null){
             return;

@@ -22,32 +22,34 @@ public class Vault {
     }
 
     public void saveInventory(Inventory inventory, Player p, int page) {
-        if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
-            try {
-                File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page);
-                FileWriter fw = new FileWriter(vault.getAbsoluteFile());
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(this.inventoryToBase64(inventory.getStorageContents()));
-                bw.close();
+        Thread t = new Thread( () -> {
+            if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
+                try {
+                    File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page);
+                    FileWriter fw = new FileWriter(vault.getAbsoluteFile());
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write(this.inventoryToBase64(inventory.getStorageContents()));
+                    bw.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
+            try (Connection connection = this.plugin.getDatabase().getConnection()) {
+                try (PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Vault(uuid, page, items) VALUES (?,?,?) ON DUPLICATE KEY UPDATE items = ?")) {
+                    ps.setString(1, p.getUniqueId().toString());
+                    ps.setInt(2, page);
+                    ps.setString(3, this.inventoryToBase64(inventory.getStorageContents()));
+                    ps.setString(4, this.inventoryToBase64(inventory.getStorageContents()));
+                    ps.executeUpdate();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return;
-        }
-        try (Connection connection = this.plugin.getDatabase().getConnection()) {
-            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Vault(uuid, page, items) VALUES (?,?,?) ON DUPLICATE KEY UPDATE items = ?")) {
-                ps.setString(1, p.getUniqueId().toString());
-                ps.setInt(2, page);
-                ps.setString(3, this.inventoryToBase64(inventory.getStorageContents()));
-                ps.setString(4, this.inventoryToBase64(inventory.getStorageContents()));
-                ps.executeUpdate();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        });
+        t.start();
     }
 
     public ItemStack[] loadInventory(int page, Player p) {
