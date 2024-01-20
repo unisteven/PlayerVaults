@@ -1,7 +1,0 @@
-me\unisteven\database\MySQL.class
-me\unisteven\command\PlayerVaultCommand.class
-me\unisteven\database\Vault.class
-me\unisteven\PlayerVault.class
-me\unisteven\database\IDataBase.class
-me\unisteven\playervaults\VaultMenu.class
-me\unisteven\database\MigrateData.class
