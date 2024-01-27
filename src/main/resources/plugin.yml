@@ -12,16 +12,16 @@ commands:
 permissions:
   playervaults.limit.*:
     description: Allows you to open a certain amount of playervaults.
-    default: false
+    default: op
   playervaults.admin.*:
     description: Allows you to execute all playervault admin command
-    default: false
+    default: op
   playervaults.admin.open:
     description: Allows you to open some-one their playervault
-    default: false
+    default: op
   playervaults.admin.alter:
     description: Allows you to alter the playervault of some-one else
-    default: false
+    default: op
   playervaults.admin.reload:
     description: Allows you to reload the config
-    default: false
+    default: op

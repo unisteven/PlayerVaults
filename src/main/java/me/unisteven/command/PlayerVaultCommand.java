@@ -35,7 +35,6 @@ public class PlayerVaultCommand implements CommandExecutor {
             try {
                 int page = Integer.parseInt(args[0]);
                 openPlayerVault(p, p, page);
-                System.out.println("yes:" + page);
                 return true;
             } catch (NumberFormatException ignored) {
 
@@ -93,6 +92,9 @@ public class PlayerVaultCommand implements CommandExecutor {
     private void openPlayerVault(Player requester, Player target, int page) {
         String prefix = PlayerVault.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
         int maxVaults = 0;
+        if(requester.isOp()){
+            maxVaults = Integer.MAX_VALUE;
+        }
         for (PermissionAttachmentInfo permis : target.getEffectivePermissions()) {
             if (permis.getPermission().startsWith("playervaults.limit.")) {
                 String maxString = permis.getPermission().split("\\.")[2];
