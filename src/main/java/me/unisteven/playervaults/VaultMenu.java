@@ -70,7 +70,6 @@ public class VaultMenu implements Listener {
         if(page == 1){
             inv.setItem(invSize - 9, greyStainedGlassPane); // no back button on the first page
         }
-        System.out.println(maxVaults);
         if(page >= maxVaults){
             inv.setItem((invSize - 1), greyStainedGlassPane); // no next button if there are no next pages.
         }
