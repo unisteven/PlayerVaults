@@ -11,11 +11,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class PlayerVaultCommand implements CommandExecutor {
-    private Map<Player, VaultMenu> vaults = new HashMap<>();
 
     private PlayerVault plugin;
 
@@ -47,7 +43,7 @@ public class PlayerVaultCommand implements CommandExecutor {
                                 sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cTo few arguments! &f/pv admin open {playername}"));
                                 return false;
                             }
-                            openPlayerVault(p, Bukkit.getPlayer(args[2]), -1);
+                            openPlayerVault(p, Bukkit.getPlayer(args[2]), 1);
                         } else {
                             sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to execute this command &f(&b&lplayervaults.admin.open&f)"));
                         }
@@ -68,7 +64,6 @@ public class PlayerVaultCommand implements CommandExecutor {
                     if (args[1].equalsIgnoreCase("reload")) {
                         if (p.hasPermission("playervaults.admin.*") || p.hasPermission("playervaults.admin.reload")) {
                             this.plugin.reloadConfig();
-                            this.vaults.clear();
                             sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&aYou have reloaded the config!"));
                         } else {
                             sender.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to execute this command &f(&b&lplayervaults.admin.reload&f)"));
@@ -85,7 +80,7 @@ public class PlayerVaultCommand implements CommandExecutor {
             }
             return true;
         }
-        openPlayerVault(p, p, -1);
+        openPlayerVault(p, p, 1);
         return false;
     }
 
@@ -112,16 +107,17 @@ public class PlayerVaultCommand implements CommandExecutor {
             target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + this.plugin.getConfig().getString("noVaults")));
             return;
         }
+        if(page < 1){
+            target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + this.plugin.getConfig().getString("noVaults")));
+            return;
+        }
         if (page > maxVaults) {
             target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), maxVaults, page)));
             return;
         }
-        VaultMenu vaultMenu = this.vaults.get(target);
-        if (vaultMenu == null) {
-            vaultMenu = new VaultMenu(maxVaults, this.plugin);
-            Bukkit.getPluginManager().registerEvents(vaultMenu, this.plugin);
-            this.vaults.put(target, vaultMenu);
-        }
+
+        VaultMenu vaultMenu = new VaultMenu(maxVaults, this.plugin);
+        Bukkit.getPluginManager().registerEvents(vaultMenu, this.plugin);
         if (vaultMenu.getRequester() != null) {
             target.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + this.plugin.getConfig().getString("inUse")));
             return;

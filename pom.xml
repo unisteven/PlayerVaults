@@ -6,7 +6,7 @@
 
     <groupId>me.unisteven</groupId>
     <artifactId>PlayerVaults</artifactId>
-    <version>1.0.1</version>
+    <version>1.4.3</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -27,22 +27,6 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version> <!-- Updated version -->
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <resources>

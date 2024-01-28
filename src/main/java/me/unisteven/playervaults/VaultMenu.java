@@ -54,13 +54,27 @@ public class VaultMenu implements Listener {
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        String[] backLores = this.plugin.getConfig().getStringList("backButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
-        inv.setItem(invSize - 9, createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("backButtonName"), this.maxVaults, this.page), backLores));
+        final ItemStack greyStainedGlassPane = createGuiItem(Material.GRAY_STAINED_GLASS_PANE, ChatColor.translateAlternateColorCodes('&', "&c-=-=-=-"));
+        final String[] backLores = this.plugin.getConfig().getStringList("backButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        final ItemStack backButtonPaper = createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("backButtonName"), this.maxVaults, this.page), backLores);
+        final String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
+        final ItemStack nextButtonPaper = createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores);
+
+
+        inv.setItem(invSize - 9, backButtonPaper);
         for (int i = (invSize - 8); i < (invSize - 1); i++) {
-            inv.setItem(i, createGuiItem(Material.GRAY_STAINED_GLASS_PANE, ChatColor.translateAlternateColorCodes('&', "&c-=-=-=-")));
+            inv.setItem(i, greyStainedGlassPane);
         }
-        String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
-        inv.setItem((invSize - 1), createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores));
+        inv.setItem((invSize - 1), nextButtonPaper);
+
+        if(page == 1){
+            inv.setItem(invSize - 9, greyStainedGlassPane); // no back button on the first page
+        }
+        System.out.println(maxVaults);
+        if(page >= maxVaults){
+            inv.setItem((invSize - 1), greyStainedGlassPane); // no next button if there are no next pages.
+        }
+
     }
 
     // Nice little method to create a gui item with a custom name, and description
@@ -119,8 +133,11 @@ public class VaultMenu implements Listener {
         final Player p = (Player) e.getWhoClicked();
 
         if (e.getRawSlot() == (invSize - 9)) {
-            if (!(page <= 1)) {
+            if (page > 1) {
                 nextPage--;
+            }else{
+                e.setCancelled(true);
+                return;
             }
             this.recreateInventory(p);
             return;
