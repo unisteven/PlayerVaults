@@ -1,22 +1,27 @@
 package me.unisteven.playervaults;
 
-import me.unisteven.PlayerVault;
-import me.unisteven.database.Vault;
+import java.util.Arrays;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.*;
+import me.unisteven.PlayerVault;
+import me.unisteven.database.Vault;
 
 public class VaultMenu implements Listener {
 
@@ -124,12 +129,12 @@ public class VaultMenu implements Listener {
                 this.requester.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to alter this inventory &f(&b&lplayervaults.admin.alter&f)"));
             }
         }
-        final ItemStack clickedItem = e.getCurrentItem();
-
-        // verify current item is not null
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-
-        final Player p = (Player) e.getWhoClicked();
+        
+        if (e.getAction() != InventoryAction.NOTHING) {
+            this.vault.saveInventory(this.inv, this.p, this.page);
+        } else {
+            return;
+        }
 
         if (e.getRawSlot() == (invSize - 9)) {
             if (page > 1) {
@@ -165,6 +170,24 @@ public class VaultMenu implements Listener {
     @EventHandler
     public void inventoryClose(InventoryCloseEvent e) {
         if (e.getInventory() != this.inv) {
+            return;
+        }
+        this.vault.saveInventory(this.inv, this.p, this.page);
+        this.requester = null;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        if (e.getPlayer().getOpenInventory().getTopInventory() != this.inv) {
+            return;
+        }
+        this.vault.saveInventory(this.inv, this.p, this.page);
+        this.requester = null;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerDeath(PlayerDeathEvent e) {
+        if (e.getEntity().getOpenInventory().getTopInventory() != this.inv) {
             return;
         }
         this.vault.saveInventory(this.inv, this.p, this.page);
