@@ -14,6 +14,7 @@ public class MySQL implements IDataBase {
 
     public void init(PlayerVault plugin) {
         this.plugin = plugin;
+
         try {
             openConnection();
         } catch (Exception e) {
@@ -23,7 +24,9 @@ public class MySQL implements IDataBase {
 
     private void openConnection() {
         FileConfiguration configuration = this.plugin.getConfig();
+
         System.out.println("Connecting to database as: " + configuration.getString("user"));
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://" + configuration.getString("host") + ":" + configuration.getInt("port") + "/" + configuration.getString("database") + "?allowMultiQueries=true");
         config.setDriverClassName("com.mysql.jdbc.Driver");
@@ -34,10 +37,11 @@ public class MySQL implements IDataBase {
         config.setIdleTimeout(60000);
         config.setConnectionTimeout(60000);
         config.setConnectionTestQuery("SELECT 1");
+
         this.dataSource = new HikariDataSource(config);
+
         System.out.println("Connection established with database!");
     }
-
 
     public void destroy() {
         try {
@@ -55,8 +59,8 @@ public class MySQL implements IDataBase {
             return this.dataSource.getConnection();
         } catch (Exception e) {
             e.printStackTrace();
+
             return null;
         }
     }
-
 }

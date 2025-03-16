@@ -1,4 +1,5 @@
 package me.unisteven.database;
+
 import me.unisteven.PlayerVault;
 
 import java.sql.Connection;

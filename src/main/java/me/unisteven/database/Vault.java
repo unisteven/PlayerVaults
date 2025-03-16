@@ -14,8 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class Vault {
-
-    private PlayerVault plugin;
+    private final PlayerVault plugin;
 
     public Vault(PlayerVault plugin) {
         this.plugin = plugin;
@@ -25,14 +24,18 @@ public class Vault {
         Thread t = new Thread( () -> {
             if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
                 try {
-                    File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page);
+                    File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId() + "-vault-" + page);
+
                     FileWriter fw = new FileWriter(vault.getAbsoluteFile());
                     BufferedWriter bw = new BufferedWriter(fw);
+
                     bw.write(this.inventoryToBase64(inventory.getStorageContents()));
+
                     bw.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
                 return;
             }
             try (Connection connection = this.plugin.getDatabase().getConnection()) {
@@ -41,6 +44,7 @@ public class Vault {
                     ps.setInt(2, page);
                     ps.setString(3, this.inventoryToBase64(inventory.getStorageContents()));
                     ps.setString(4, this.inventoryToBase64(inventory.getStorageContents()));
+
                     ps.executeUpdate();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -49,6 +53,7 @@ public class Vault {
                 e.printStackTrace();
             }
         });
+
         t.start();
     }
 
@@ -56,14 +61,17 @@ public class Vault {
         if (this.plugin.getStorageType().equalsIgnoreCase("flat")) {
             try {
                 File dir = new File(plugin.getDataFolder() + "/vaults/");
+
                 if (!dir.exists()) {
                     dir.mkdir();
                 }
-                File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page);
+
+                File vault = new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId() + "-vault-" + page);
                 if(!vault.exists()){
                     vault.createNewFile();
                 }
-                InputStream is = new FileInputStream(new File(plugin.getDataFolder() + "/vaults/" + p.getUniqueId().toString() + "-vault-" + page));
+
+                InputStream is = new FileInputStream(plugin.getDataFolder() + "/vaults/" + p.getUniqueId() + "-vault-" + page);
                 BufferedReader buf = new BufferedReader(new InputStreamReader(is));
 
                 String line = buf.readLine();
@@ -75,20 +83,26 @@ public class Vault {
                 }
 
                 String fileAsString = sb.toString();
+
                 if(fileAsString.equalsIgnoreCase("")){
                     return null;
                 }
+
                 return this.inventoryFromBase64(fileAsString);
             }catch (Exception e){
                 e.printStackTrace();
             }
+
             return null;
         }
+
         ItemStack[] inventory = null;
+
         try (Connection connection = this.plugin.getDatabase().getConnection()) {
             try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM pv_Vault WHERE uuid = ? AND page = ?")) {
                 ps.setString(1, p.getUniqueId().toString());
                 ps.setInt(2, page);
+
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         inventory = this.inventoryFromBase64(rs.getString("items"));
@@ -102,6 +116,7 @@ public class Vault {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return inventory;
     }
 
@@ -109,11 +124,14 @@ public class Vault {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+
             dataOutput.writeObject(kit);
+
             dataOutput.close();
+
             return Base64Coder.encodeLines(outputStream.toByteArray());
-        } catch (Exception var4) {
-            throw new IllegalStateException("An Error has occurred! Contact Developer!", var4);
+        } catch (Exception e) {
+            throw new IllegalStateException("An Error has occurred! Contact Developer!", e);
         }
     }
 
@@ -121,11 +139,14 @@ public class Vault {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(s));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
+
             ItemStack[] kit = (ItemStack[]) dataInput.readObject();
+
             dataInput.close();
+
             return kit;
-        } catch (Exception var4) {
-            throw new IllegalStateException("An Error has occurred! Contact Developer!", var4);
+        } catch (Exception e) {
+            throw new IllegalStateException("An Error has occurred! Contact Developer!", e);
         }
     }
 }
