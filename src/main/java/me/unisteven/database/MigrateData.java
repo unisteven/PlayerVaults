@@ -13,7 +13,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 
 public class MigrateData {
-    private PlayerVault plugin;
+    private final PlayerVault plugin;
 
     public MigrateData(PlayerVault plugin) {
         this.plugin = plugin;
@@ -27,24 +27,23 @@ public class MigrateData {
                         // Default tables do not yet exist so version 1.
                         this.updateToVersion(1);
                     } else {
-                        try(PreparedStatement ps2 = connection.prepareStatement("SELECT MAX(version) AS version FROM pv_Version")){
-                            try(ResultSet rs2 = ps2.executeQuery()){
-                                if(rs2.next()){
+                        try (PreparedStatement ps2 = connection.prepareStatement("SELECT MAX(version) AS version FROM pv_Version")) {
+                            try (ResultSet rs2 = ps2.executeQuery()) {
+                                if (rs2.next()) {
                                     int version = rs2.getInt("version");
                                     Bukkit.getLogger().log(Level.INFO, "Rebelwar is on version: " + version + " trying to update to version: " + (version + 1));
+
                                     if (this.loadVersion(version + 1) != null) {
                                         this.updateToVersion(version + 1);
                                         this.checkForUpdates();
                                     }
                                 }
-                            }catch (Exception e){
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
-
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
-
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -60,22 +59,27 @@ public class MigrateData {
     public void updateToVersion(int version) {
         Bukkit.getLogger().log(Level.CONFIG, "Loading version " + version + " into the database");
         String sql = this.loadVersion(version);
-        if(sql == null){
+
+        if (sql == null) {
             return;
         }
+
         try (Connection connection = this.plugin.getDatabase().getConnection()) {
             connection.setAutoCommit(false);
+
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            try(PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Version VALUES (?)")){
+
+            try (PreparedStatement ps = connection.prepareStatement("INSERT INTO pv_Version VALUES (?)")) {
                 ps.setInt(1, version);
                 ps.executeUpdate();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
+
             connection.commit();
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,21 +88,24 @@ public class MigrateData {
 
     public String loadVersion(int version) {
         InputStream inputStream = plugin.getClass().getClassLoader().getResourceAsStream("version-" + version + ".sql");
-        if(inputStream != null) {
+
+        if (inputStream != null) {
             try {
                 InputStreamReader isReader = new InputStreamReader(inputStream);
-                //Creating a BufferedReader object
                 BufferedReader reader = new BufferedReader(isReader);
                 StringBuilder sb = new StringBuilder();
                 String str;
+
                 while ((str = reader.readLine()) != null) {
                     sb.append(str);
                 }
+
                 return sb.toString();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
         return null;
     }
 }

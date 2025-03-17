@@ -16,20 +16,26 @@ public class PlayerVault extends JavaPlugin {
     @Override
     public void onEnable(){
         Bukkit.getLogger().log(Level.FINE, "PlayerVaults is enabling");
-//        // configs
+
         this.getConfig().options().copyDefaults(true);
         saveConfig();
-//        // commands
+
         getCommand("playervault").setExecutor(new PlayerVaultCommand(this));
-//        // database
+
         try {
             String storageType = getConfig().getString("storageType");
+
             this.storageType = storageType;
+
+            assert storageType != null;
             if(storageType.equalsIgnoreCase("mysql")){
-                this.database = new MySQL();
                 Bukkit.getLogger().log(Level.INFO, "Loading database type:" + storageType);
+
+                this.database = new MySQL();
                 this.database.init(this);
+
                 Bukkit.getLogger().log(Level.FINE, "Database loaded succesfully");
+
                 MigrateData dataMigration = new MigrateData(this);
                 dataMigration.checkForUpdates();
             }
@@ -37,15 +43,13 @@ public class PlayerVault extends JavaPlugin {
         }catch (Exception e){
             Bukkit.getLogger().log(Level.SEVERE, "Database connection failed! with the following error:");
             e.printStackTrace();
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
 
+            Bukkit.getPluginManager().disablePlugin(this);
+        }
     }
 
     @Override
     public void onDisable(){
-
     }
 
     public IDataBase getDatabase() {

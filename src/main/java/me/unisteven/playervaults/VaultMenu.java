@@ -24,7 +24,6 @@ import me.unisteven.PlayerVault;
 import me.unisteven.database.Vault;
 
 public class VaultMenu implements Listener {
-
     private Inventory inv;
     private int page = 1;
     private int nextPage = 1;
@@ -46,13 +45,18 @@ public class VaultMenu implements Listener {
         if(nextPage != page){
             page = nextPage;
         }
+
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         inv = Bukkit.createInventory(null, invSize, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("menuName"), this.maxVaults, this.page));
+
         ItemStack[] inventory = this.vault.loadInventory(this.page, this.p);
+
         inv.clear();
+
         if (inventory != null) {
             inv.setContents(inventory);
         }
+
         // Put the items into the inventory
         initializeItems();
     }
@@ -65,67 +69,70 @@ public class VaultMenu implements Listener {
         final String[] nextLores = this.plugin.getConfig().getStringList("nextButtonDescription").stream().map(s -> PlayerVault.translatePlaceholders(s, this.maxVaults, this.page)).toArray(String[]::new);
         final ItemStack nextButtonPaper = createGuiItem(Material.PAPER, PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("nextButtonName"), this.maxVaults, this.page), nextLores);
 
-
         inv.setItem(invSize - 9, backButtonPaper);
+
         for (int i = (invSize - 8); i < (invSize - 1); i++) {
             inv.setItem(i, greyStainedGlassPane);
         }
+
         inv.setItem((invSize - 1), nextButtonPaper);
 
         if(page == 1){
             inv.setItem(invSize - 9, greyStainedGlassPane); // no back button on the first page
         }
+
         if(page >= maxVaults){
             inv.setItem((invSize - 1), greyStainedGlassPane); // no next button if there are no next pages.
         }
-
     }
 
-    // Nice little method to create a gui item with a custom name, and description
+    // Nice little method to create a GUI item with a custom name, and description
     protected ItemStack createGuiItem(final Material material, final String name, final String... lore) {
         final ItemStack item = new ItemStack(material, 1);
-        final ItemMeta meta = item.getItemMeta();
+        final ItemMeta metaData = item.getItemMeta();
 
-        // Set the name of the item
-        meta.setDisplayName(name);
+        metaData.setDisplayName(name);
+        metaData.setLore(Arrays.asList(lore));
 
-        // Set the lore of the item
-        meta.setLore(Arrays.asList(lore));
-
-        item.setItemMeta(meta);
+        item.setItemMeta(metaData);
 
         return item;
     }
 
-    // You can open the inventory with this
     public void openInventory(final HumanEntity ent, final HumanEntity requester) {
         if(requester != ent && requester != null){
             this.requester = (Player) requester;
             this.p = (Player) ent;
+
             ent.closeInventory(); // close inventory in case they still got one open
+
             createInv();
             requester.openInventory(inv);
         }else {
             this.p = (Player) ent;
+
             createInv();
             ent.openInventory(inv);
         }
     }
 
-    // Check for clicks on items
     @EventHandler
     public void onInventoryClick(final InventoryClickEvent e) {
         if(e.getInventory() != inv){
             return;
         }
+
         if (e.getRawSlot() >= (invSize - 9) && e.getRawSlot() <= (invSize - 1)) {
             e.setCancelled(true); // players can only take items at the top.
         }
+
         String prefix = PlayerVault.translatePlaceholders(plugin.getConfig().getString("prefix"), 0, 0);
+
         // if it is an admin check if he has perm to alter the inv
         if(this.requester != null){
             if(!(this.requester.hasPermission("playervaults.admin.*") || this.requester.hasPermission("playervaults.admin.alter"))){
                 e.setCancelled(true);
+
                 this.requester.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', "&cYou do not have permission to alter this inventory &f(&b&lplayervaults.admin.alter&f)"));
             }
         }
@@ -141,60 +148,68 @@ public class VaultMenu implements Listener {
                 nextPage--;
             }else{
                 e.setCancelled(true);
+
                 return;
             }
+
             this.recreateInventory(p);
+
             return;
         }
+
         if (e.getRawSlot() == (invSize - 1)) {
             if((this.page + 1) > maxVaults){
                 String message = PlayerVault.translatePlaceholders(this.plugin.getConfig().getString("vaultLimitReached"), this.maxVaults, this.page);
+
                 p.sendMessage(prefix + message);
-                return;
             }else {
                 nextPage++;
+
                 this.recreateInventory(p);
-                return;
             }
         }
     }
 
     @EventHandler
-    public void inventoryDragEvent(InventoryDragEvent e) {
-        if (e.getInventory() != this.inv) {
+    public void inventoryDragEvent(InventoryDragEvent event) {
+        if (event.getInventory() != this.inv) {
             return;
         }
+
         this.vault.saveInventory(this.inv, this.p, this.page);
     }
 
     @EventHandler
-    public void inventoryClose(InventoryCloseEvent e) {
-        if (e.getInventory() != this.inv) {
+    public void inventoryClose(InventoryCloseEvent event) {
+        if (event.getInventory() != this.inv) {
             return;
         }
+
         this.vault.saveInventory(this.inv, this.p, this.page);
         this.requester = null;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        if (e.getPlayer().getOpenInventory().getTopInventory() != this.inv) {
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        if (event.getPlayer().getOpenInventory().getTopInventory() != this.inv) {
             return;
         }
+
         this.vault.saveInventory(this.inv, this.p, this.page);
         this.requester = null;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerDeath(PlayerDeathEvent e) {
-        if (e.getEntity().getOpenInventory().getTopInventory() != this.inv) {
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (event.getEntity().getOpenInventory().getTopInventory() != this.inv) {
             return;
         }
+
         this.vault.saveInventory(this.inv, this.p, this.page);
         this.requester = null;
     }
 
-    private void recreateInventory(Player p) {
+    private void recreateInventory(Player player) {
         this.vault.saveInventory(this.inv, this.p, this.page);
         this.openInventory(this.p, this.requester);
     }
